@@ -74,7 +74,11 @@ private[elitzur] class OptionConverter[T: AvroConverter] extends AvroConverter[O
   override def toAvro(v: Option[T], schema: Schema): Any = {
     v match {
       case None => null
-      case Some(t) => implicitly[AvroConverter[T]].toAvro(t, schema)
+      case Some(t) =>
+        schema.getTypes.asScala.toList.filterNot(_.getType == Schema.Type.NULL) match {
+          case head :: Nil => implicitly[AvroConverter[T]].toAvro(t, head)
+          case _ => throw new IllegalArgumentException("Option may only be UNION of two types")
+        }
     }
   }
 
@@ -131,7 +135,11 @@ private[elitzur] class AvroOptionConverter[T <: BaseValidationType[_]: AvroConve
   override def toAvro(v: Option[T], schema: Schema): Any = {
     v match {
       case None => null
-      case Some(t) => implicitly[AvroConverter[T]].toAvro(t, schema)
+      case Some(t) =>
+        schema.getTypes.asScala.toList.filterNot(_.getType == Schema.Type.NULL) match {
+          case head :: Nil => implicitly[AvroConverter[T]].toAvro(t, head)
+          case _ => throw new IllegalArgumentException("Option may only be UNION of two types")
+        }
     }
   }
 
